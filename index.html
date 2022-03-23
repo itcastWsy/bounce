@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0,maximum-scale=1,minimum-scale=1,user-scalable=no"
+    />
+    <title>index.html</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        padding-top: 200px;
+        text-align: center;
+      }
+      canvas {
+        border: 1px solid #000;
+        background-image: url(./images/20200820014508687.jpg);
+        background-size: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="600" height="400"> </canvas>
+    <script>
+      class Game {
+        constructor(el, option) {
+          this.init(el, option);
+          this.start();
+        }
+        init(el, option) {
+          const canvas = document.querySelector(el);
+          canvas.width = option.width;
+          canvas.height = option.height;
+          const ctx = canvas.getContext('2d');
+          this.canvas = canvas;
+          this.ctx = ctx;
+          this.bounce = new Bounce(ctx, {
+            x: parseInt(Math.random() * canvas.width - 50),
+            y: 0,
+            speedX: 3,
+            speedY: 3,
+            radius: 30,
+            canvas,
+          });
+          this.baffle = new Baffle(ctx, {
+            x: 0,
+            y: canvas.height - 4,
+            width: 100,
+            height: 4,
+            canvas,
+            color: 'orange',
+          });
+          this.requestAnimationFrameId = undefined;
+          this.animationList = [];
+          this.addInanimationList();
+        }
+        clear() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+        addInanimationList() {
+          this.animationList.push(this.clear.bind(this));
+          this.animationList.push(this.bounce.move.bind(this.bounce));
+          this.animationList.push(this.baffle.show.bind(this.baffle));
+          // 判断碰撞
+        }
+        start() {
+          this.requestAnimationFrame();
+        }
+        requestAnimationFrame() {
+          if (!this.isCrashBaffle && this.bounce.isReachBottom) {
+            alert('你输了');
+            location.reload();
+          } else {
+            this.animationList.forEach((fn) => fn());
+            this.requestAnimationFrameId = window.requestAnimationFrame(() => {
+              this.requestAnimationFrame();
+            });
+          }
+        }
+
+        get isCrashBaffle() {
+          const isBetweenX =
+            this.bounce.x + this.bounce.radius >= this.baffle.x &&
+            this.bounce.x <= this.baffle.x + this.baffle.width;
+          const isBetweenY =
+            this.bounce.y + this.bounce.radius >= this.baffle.y;
+
+          return isBetweenX && isBetweenY;
+        }
+      }
+      // 小球
+      class Bounce {
+        constructor(ctx, option) {
+          this.ctx = ctx;
+          this.x = option.x;
+          this.y = option.y;
+          this.speedX = option.speedX;
+          this.speedY = option.speedY;
+          this.radius = option.radius;
+          this.canvas = option.canvas;
+        }
+        move() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.crash();
+          this.show();
+        }
+
+        get isReachBottom() {
+          return this.y >= this.canvas.height;
+        }
+        // 超出边界
+        get overRect() {
+          return this.y >= this.canvas.height || this.y <= 0;
+        }
+        crash() {
+          if (this.x >= this.canvas.width || this.x <= 0) {
+            this.speedX = -this.speedX;
+          }
+          // 圆心碰到上下
+          if (this.overRect) {
+            this.speedY = -this.speedY;
+          }
+        }
+        show() {
+          this.ctx.fillStyle = 'aqua';
+          this.ctx.beginPath();
+          this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      }
+
+      // 挡板
+      class Baffle {
+        constructor(ctx, option) {
+          this.ctx = ctx;
+          this.canvas = option.canvas;
+          this.x = option.x;
+          this.y = option.y;
+          this.width = option.width;
+          this.height = option.height;
+          this.color = option.color;
+
+          this.controlMove();
+        }
+        show() {
+          const fillStyle = this.ctx.fillStyle;
+          this.ctx.fillStyle = this.color;
+          this.ctx.fillRect(this.x, this.y, this.width, this.height);
+          this.ctx.fillStyle = fillStyle;
+        }
+        controlMove() {
+          // canvas不支持绑定键盘事件
+          document.body.addEventListener('keydown', (e) => {
+            switch (e.key) {
+              case 'ArrowLeft':
+                this.x -= 30;
+                if (this.x < 0) {
+                  this.x = 0;
+                }
+                break;
+              case 'ArrowRight':
+                this.x += 30;
+                if (this.x + this.width > this.canvas.width) {
+                  this.x = this.canvas.width - this.width;
+                }
+                break;
+              default:
+                break;
+            }
+          });
+        }
+      }
+
+      const game = new Game('canvas', { width: 600, height: 400 });
+    </script>
+  </body>
+</html>
