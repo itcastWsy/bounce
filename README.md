@@ -867,3 +867,4 @@ class Game {
 1. [10分钟-带你走进H5-五子棋](https://juejin.cn/post/7074568084459094046)
 2. [canvas生成海报](https://juejin.cn/post/6844903955219103758)
 3. [代码地址](https://github.com/itcastWsy/bounce) 
+4. [在线演示地址](https://itcastwsy.github.io/bounce/index.html)
